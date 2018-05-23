@@ -2,7 +2,7 @@ Spree::Variant.class_eval do
 
   def join_volume_prices(user=nil, currency=nil)
     table = Spree::VolumePrice.arel_table
-    #currency ||= Spree::Config[:currency]
+    #currency ||= Spree::Config[:currency]   
     if user
       Spree::VolumePrice.where(
         (table[:variant_id].eq(self.id)
@@ -24,7 +24,7 @@ Spree::Variant.class_eval do
 
   # calculates the price based on quantity
   def volume_price(quantity, user=nil, currency=nil)
-    compute_volume_price_quantities :volume_price, self.price, quantity, user, currency
+    compute_volume_price_quantities :volume_price, self.price_in(currency).price, quantity, user, currency
   end
 
   # return percent of earning

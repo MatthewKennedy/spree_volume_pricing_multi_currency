@@ -2,14 +2,17 @@
 Spree::LineItem.class_eval do
   #from multi_currency
   def update_price
-   # currency_price = Spree::Price.where(
-   #   currency: order.currency,
-   #   variant_id: variant_id
-   # ).first
+    currency_price = Spree::Price.where(
+      currency: order.currency,
+      variant_id: variant_id
+    ).first
 
-   # self.price = currency_price.price_including_vat_for(tax_zone: tax_zone)
-
-    copy_price
+    self.price = currency_price.price_including_vat_for(tax_zone: tax_zone)
+    #byebug
+    vprice = self.variant.volume_price(self.quantity, self.order.user, self.currency)
+    if self.price.present? && vprice <= self.variant.price_in(self.currency).price
+      self.price = vprice and return
+    end
   end
 
   # pattern grabbed from: http://stackoverflow.com/questions/4470108/
@@ -22,17 +25,17 @@ Spree::LineItem.class_eval do
   old_copy_price = instance_method(:copy_price)
   define_method(:copy_price) do
     #old_copy_price.bind(self).call
-
+    #byebug
     if variant
-      if changed? && (changes.keys.include?('quantity') || changes.keys.include?('currency'))
+      #if changed? && (changes.keys.include?('quantity') || changes.keys.include?('currency'))
         vprice = self.variant.volume_price(self.quantity, self.order.user, self.currency)
-        if self.price.present? && vprice <= self.variant.price
+        if vprice <= self.variant.price_in(self.currency).price
           self.price = vprice and return
         end
-      end
+      #end
 
       if self.price.nil?
-        self.price = self.variant.price
+        self.price = self.variant.price_in(self.currency).price
       end
     end
   end
